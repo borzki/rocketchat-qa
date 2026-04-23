@@ -1,0 +1,180 @@
+name: Assignment 3 — Experimental Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_mutation:
+        description: 'Run Stryker mutation test (slow)'
+        type: boolean
+        default: false
+      run_performance:
+        description: 'Run k6 smoke + load'
+        type: boolean
+        default: true
+      run_chaos:
+        description: 'Run chaos scenarios (api-downtime, db-outage, network-latency)'
+        type: boolean
+        default: false
+  schedule:
+    - cron: '0 3 * * 1'  # Monday 03:00 UTC — nightly slot for heavier tests
+  push:
+    paths:
+      - 'lib/**'
+      - 'tests/unit/**'
+      - 'tests/performance/**'
+      - 'stryker.config.mjs'
+      - '.github/workflows/assignment3.yml'
+      - 'scripts/quality-gates-assignment3.js'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-and-mutation:
+    name: Unit tests + mutation gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Mutation test (Stryker)
+        if: github.event_name == 'schedule' || github.event.inputs.run_mutation == 'true'
+        run: npx stryker run
+
+      - name: Evaluate mutation quality gate
+        if: github.event_name == 'schedule' || github.event.inputs.run_mutation == 'true'
+        run: node scripts/quality-gates-assignment3.js --suite=mutation
+
+      - name: Upload mutation report
+        if: always() && (github.event_name == 'schedule' || github.event.inputs.run_mutation == 'true')
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: |
+            results/mutation/
+            results/quality-gates-summary.json
+          retention-days: 14
+
+  performance-gate:
+    name: Performance gate (k6)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Rocket.Chat stack
+        run: docker compose up -d
+
+      - name: Wait for Rocket.Chat
+        run: |
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000/api/info > /dev/null; then
+              echo "Rocket.Chat ready after $((i * 5))s"; exit 0
+            fi
+            sleep 5
+          done
+          echo "Rocket.Chat never became ready"
+          docker compose logs --tail=80 rocketchat
+          exit 1
+
+      - name: Prepare results dir
+        run: mkdir -p results/performance
+
+      - name: k6 smoke
+        if: github.event.inputs.run_performance != 'false'
+        run: |
+          docker run --rm --network host \
+            -v ${{ github.workspace }}/tests/performance/k6:/scripts \
+            -v ${{ github.workspace }}/results/performance:/out \
+            -e BASE_URL=http://localhost:3000 \
+            grafana/k6 run --summary-export=/out/smoke-summary.json /scripts/smoke.js
+
+      - name: k6 load
+        if: github.event.inputs.run_performance != 'false'
+        run: |
+          docker run --rm --network host \
+            -v ${{ github.workspace }}/tests/performance/k6:/scripts \
+            -v ${{ github.workspace }}/results/performance:/out \
+            -e BASE_URL=http://localhost:3000 \
+            grafana/k6 run --summary-export=/out/load-summary.json /scripts/load.js
+
+      - name: Evaluate performance quality gate
+        if: github.event.inputs.run_performance != 'false'
+        run: node scripts/quality-gates-assignment3.js --suite=k6
+
+      - name: Upload performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: |
+            results/performance/
+            results/quality-gates-summary.json
+          retention-days: 14
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  chaos:
+    name: Chaos / fault injection
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_chaos == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Start Rocket.Chat stack with toxiproxy overlay
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.chaos.yml up -d
+          echo "Waiting for Rocket.Chat..."
+          for i in {1..60}; do
+            curl -sf http://localhost:3000/api/info > /dev/null && exit 0
+            sleep 5
+          done
+          echo "RC not ready"; docker compose logs --tail=80 rocketchat; exit 1
+
+      - name: Verify toxiproxy is listening
+        run: curl -sf http://localhost:8474/proxies | head -c 200 && echo
+
+      - name: Run chaos scenarios
+        run: node tests/chaos/run-all.js api-downtime db-outage network-latency
+
+      - name: Evaluate chaos quality gate
+        run: node scripts/quality-gates-assignment3.js --suite=chaos
+
+      - name: Upload chaos artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-results
+          path: |
+            results/chaos/
+            results/quality-gates-summary.json
+          retention-days: 14
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.yml -f docker-compose.chaos.yml down -v

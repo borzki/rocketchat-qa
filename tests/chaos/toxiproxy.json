@@ -1,0 +1,8 @@
+[
+  {
+    "name": "rocketchat",
+    "listen": "0.0.0.0:3001",
+    "upstream": "rocketchat:3000",
+    "enabled": true
+  }
+]

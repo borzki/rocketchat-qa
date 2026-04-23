@@ -8,3 +8,12 @@ coverage/
 
 # Generated docs/build artifacts
 docs/assignment2-final-report-embedded.html
+
+# Stryker mutation testing artifacts
+stryker-tmp/
+.stryker-tmp/
+stryker.log
+reports/
+
+# Assignment 3 raw outputs are kept but logs can be regenerated
+results/mutation/stryker-stdout.log

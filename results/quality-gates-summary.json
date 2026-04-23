@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "suite": "mutation",
+      "name": "score >= 75%",
+      "status": "pass",
+      "detail": "score=80.51% (killed=156 survived=31 timeout=1 noCov=7 / total=195)"
+    },
+    {
+      "suite": "k6",
+      "name": "smoke",
+      "status": "pass",
+      "detail": "p95=11.77ms (limit 800ms, ok); err=0.00% (limit 1.00%, ok)"
+    },
+    {
+      "suite": "k6",
+      "name": "load",
+      "status": "pass",
+      "detail": "p95=93.59ms (limit 800ms, ok); err=0.00% (limit 1.00%, ok)"
+    },
+    {
+      "suite": "k6",
+      "name": "stress",
+      "status": "pass",
+      "detail": "p95=64.38ms (limit 2000ms, ok); err=0.00% (limit 5.00%, ok)"
+    },
+    {
+      "suite": "k6",
+      "name": "spike",
+      "status": "pass",
+      "detail": "p95=127.77ms (limit 3000ms, ok); err=0.00% (limit 10.00%, ok)"
+    },
+    {
+      "suite": "chaos",
+      "name": "api-downtime",
+      "status": "pass",
+      "detail": "avail=63.33% (min 30%, ok); mttr=44.0s (max 120s, ok)"
+    },
+    {
+      "suite": "chaos",
+      "name": "db-outage",
+      "status": "pass",
+      "detail": "avail=90% (min 70%, ok); mttr=27.2s (max 90s, ok)"
+    },
+    {
+      "suite": "chaos",
+      "name": "network-latency",
+      "status": "pass",
+      "detail": "avail=100% (min 95%, ok)"
+    }
+  ],
+  "passed": 8,
+  "failed": 0,
+  "skipped": 0
+}

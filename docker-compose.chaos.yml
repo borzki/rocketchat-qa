@@ -1,0 +1,17 @@
+# Chaos overlay: adds toxiproxy in front of the Rocket.Chat API so we can
+# inject network latency / packet loss without modifying the main compose.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.chaos.yml up -d toxiproxy
+#
+# Probe traffic is expected to hit http://localhost:3001 (toxiproxy listener).
+# The toxiproxy admin API is exposed on :8474.
+services:
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    ports:
+      - "3001:3001"
+      - "8474:8474"
+    volumes:
+      - ./tests/chaos/toxiproxy.json:/config/toxiproxy.json:ro

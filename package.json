@@ -4,10 +4,25 @@
   "description": "Rocket.Chat QA — API integration tests with CI/CD pipeline",
   "scripts": {
     "test": "jest --config jest.config.js --verbose",
+    "test:unit": "jest --config jest.config.js --selectProjects unit --verbose",
+    "test:api": "jest --config jest.config.js --selectProjects api --verbose",
     "test:coverage": "jest --config jest.config.js --verbose --coverage",
-    "test:ci": "jest --config jest.config.js --verbose --coverage --ci --forceExit"
+    "test:ci": "jest --config jest.config.js --verbose --coverage --ci --forceExit",
+    "perf:smoke": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" grafana/k6 run /scripts/smoke.js",
+    "perf:load": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" -v \"%cd%/results/performance:/out\" grafana/k6 run --summary-export=/out/load-summary.json /scripts/load.js",
+    "perf:stress": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" -v \"%cd%/results/performance:/out\" grafana/k6 run --summary-export=/out/stress-summary.json /scripts/stress.js",
+    "perf:spike": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" -v \"%cd%/results/performance:/out\" grafana/k6 run --summary-export=/out/spike-summary.json /scripts/spike.js",
+    "perf:endurance": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" -v \"%cd%/results/performance:/out\" grafana/k6 run --summary-export=/out/endurance-summary.json /scripts/endurance.js",
+    "mutation": "stryker run",
+    "chaos": "node tests/chaos/run-all.js",
+    "gates": "node scripts/quality-gates-assignment3.js",
+    "gates:mutation": "node scripts/quality-gates-assignment3.js --suite=mutation",
+    "gates:k6": "node scripts/quality-gates-assignment3.js --suite=k6",
+    "gates:chaos": "node scripts/quality-gates-assignment3.js --suite=chaos"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/jest-runner": "^9.6.1",
     "axios": "^1.6.7",
     "jest": "^29.7.0"
   },

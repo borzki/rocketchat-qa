@@ -1,0 +1,35 @@
+{
+  "api-downtime": {
+    "total": 60,
+    "ok": 38,
+    "failed": 22,
+    "availability_pct": 63.33,
+    "mttr_ms": 44046,
+    "mean_latency_ms": 10.68,
+    "p95_latency_ms": 34,
+    "first_failure_ts": "2026-04-23T14:23:56.820Z",
+    "first_recovery_ts": "2026-04-23T14:24:40.866Z"
+  },
+  "db-outage": {
+    "total": 50,
+    "ok": 45,
+    "failed": 5,
+    "availability_pct": 90,
+    "mttr_ms": 27209,
+    "mean_latency_ms": 45.89,
+    "p95_latency_ms": 31,
+    "first_failure_ts": "2026-04-23T14:31:16.142Z",
+    "first_recovery_ts": "2026-04-23T14:31:43.351Z"
+  },
+  "network-latency": {
+    "total": 75,
+    "ok": 75,
+    "failed": 0,
+    "availability_pct": 100,
+    "mttr_ms": null,
+    "mean_latency_ms": 223.27,
+    "p95_latency_ms": 593,
+    "first_failure_ts": null,
+    "first_recovery_ts": null
+  }
+}
