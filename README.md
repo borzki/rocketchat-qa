@@ -57,6 +57,7 @@ package.json
 npm ci
 npx playwright install --with-deps chromium
 npm test
+npm run test:e2e
 ```
 
 To open the HTML report after a local run:

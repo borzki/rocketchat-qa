@@ -1,6 +1,6 @@
 {
   "name": "rocketchat-qa",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Rocket.Chat QA — API integration tests with CI/CD pipeline",
   "scripts": {
     "test": "jest --config jest.config.js --verbose",
@@ -8,6 +8,7 @@
     "test:api": "jest --config jest.config.js --selectProjects api --verbose",
     "test:coverage": "jest --config jest.config.js --verbose --coverage",
     "test:ci": "jest --config jest.config.js --verbose --coverage --ci --forceExit",
+    "test:e2e": "npx playwright test --config playwright.config.ts",
     "perf:smoke": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" grafana/k6 run /scripts/smoke.js",
     "perf:load": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" -v \"%cd%/results/performance:/out\" grafana/k6 run --summary-export=/out/load-summary.json /scripts/load.js",
     "perf:stress": "docker run --rm -i -v \"%cd%/tests/performance/k6:/scripts\" -v \"%cd%/results/performance:/out\" grafana/k6 run --summary-export=/out/stress-summary.json /scripts/stress.js",
